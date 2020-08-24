@@ -94,12 +94,17 @@ let TaskController = {
   },
   // Delete Task
   delete: async (req, res) => {
-    await Task.updateMany(
-      {
-        linkedTasks: { $elemMatch: { _id: req.params.task_id } }
-      },
-      { $set: { linkedTasks: [] } }
-    ).exec();
+    const result = await Task.find({
+      linkedTasks: { $elemMatch: { _id: req.params.task_id } }
+    }).exec();
+
+    result.forEach(task => {
+      task.linkedTasks = task.linkedTasks.filter(function (value) {
+        return value._id != req.params.task_id;
+      });
+      task.save();
+    });
+
     await Task.deleteOne(
       {
         _id: req.params.task_id
